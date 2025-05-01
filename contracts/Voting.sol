@@ -1,6 +1,5 @@
 pragma solidity ^0.4.17;
 
-
 contract Voting {
 
     struct Proposal {
@@ -8,6 +7,7 @@ contract Voting {
         uint voteCountPos;
         uint voteCountNeg;
         uint voteCountAbs;
+        uint deadline;
         mapping (address => Voter) voters;
         address[] votersAddress;
     }
@@ -26,25 +26,27 @@ contract Voting {
         return proposals.length;
     }
 
-    function getProposal(uint proposalInt) public view returns (uint, string, uint, uint, uint, address[]) {
+    function getProposal(uint proposalInt) public view returns (uint, string, uint, uint, uint, address[], uint) {
         if (proposals.length > 0) {
-            Proposal storage p = proposals[proposalInt]; // Get the proposal
-            return (proposalInt, p.title, p.voteCountPos, p.voteCountNeg, p.voteCountAbs, p.votersAddress);
+            Proposal storage p = proposals[proposalInt];
+            return (proposalInt, p.title, p.voteCountPos, p.voteCountNeg, p.voteCountAbs, p.votersAddress, p.deadline);
         }
     }
 
-    function addProposal(string title) public returns (bool) {
+    function addProposal(string title, uint deadline) public returns (bool) {
         Proposal memory proposal;
-        CreatedProposalEvent();
         proposal.title = title;
+        proposal.deadline = deadline;
         proposals.push(proposal);
+        CreatedProposalEvent();
         return true;
     }
 
     function vote(uint proposalInt, uint voteValue) public returns (bool) {
-        if (proposals[proposalInt].voters[msg.sender].voted == false) { // check duplicate key
-            require(voteValue == 1 || voteValue == 2 || voteValue == 3); // check voteValue
-            Proposal storage p = proposals[proposalInt]; // Get the proposal
+        require(voteValue == 1 || voteValue == 2 || voteValue == 3);
+        Proposal storage p = proposals[proposalInt];
+        require(now < p.deadline);
+        if (!p.voters[msg.sender].voted) {
             if (voteValue == 1) {
                 p.voteCountPos += 1;
             } else if (voteValue == 2) {
@@ -52,8 +54,7 @@ contract Voting {
             } else {
                 p.voteCountAbs += 1;
             }
-            p.voters[msg.sender].value = voteValue;
-            p.voters[msg.sender].voted = true;
+            p.voters[msg.sender] = Voter(voteValue, true);
             p.votersAddress.push(msg.sender);
             CreatedVoteEvent();
             return true;
@@ -61,5 +62,4 @@ contract Voting {
             return false;
         }
     }
-
 }
