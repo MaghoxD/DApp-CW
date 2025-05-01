@@ -17,7 +17,7 @@ This is a decentralized voting application built using the Truffle Framework and
 - Real-time vote count  
 ---
 
-## 🛠Installation & Running Instructions
+## Installation & Running Instructions
 ### Prerequisites
 - Node.js 
 - Truffle
