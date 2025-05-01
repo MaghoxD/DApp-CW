@@ -29,7 +29,15 @@ contract Voting {
     function getProposal(uint proposalInt) public view returns (uint, string, uint, uint, uint, address[], uint) {
         if (proposals.length > 0) {
             Proposal storage p = proposals[proposalInt];
-            return (proposalInt, p.title, p.voteCountPos, p.voteCountNeg, p.voteCountAbs, p.votersAddress, p.deadline);
+            return (
+                proposalInt,
+                p.title,
+                p.voteCountPos,
+                p.voteCountNeg,
+                p.voteCountAbs,
+                p.votersAddress,
+                p.deadline
+            );
         }
     }
 
@@ -45,7 +53,9 @@ contract Voting {
     function vote(uint proposalInt, uint voteValue) public returns (bool) {
         require(voteValue == 1 || voteValue == 2 || voteValue == 3);
         Proposal storage p = proposals[proposalInt];
-        require(now < p.deadline);
+
+        require(p.deadline == 0 || now < p.deadline);
+
         if (!p.voters[msg.sender].voted) {
             if (voteValue == 1) {
                 p.voteCountPos += 1;

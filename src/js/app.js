@@ -8,10 +8,7 @@ App = {
 
   // Instance Web3
   initWeb3: function () {
-        // Is there an injected web3 instance?
     if (typeof web3 !== 'undefined') {
-      // If no injected web3 instance is detected, fall back to Ganache
-      // Only useful in a development environment
       App.web3Provider = web3.currentProvider;
     } else {
       App.web3Provider = new Web3.providers.HttpProvider('https://glowing-space-palm-tree-447v74r7q74h7p5-7545.app.github.dev/');
@@ -23,11 +20,8 @@ App = {
   // Instance contract
   initContract: function () {
     $.getJSON('Voting.json', function (data) {
-      // Get the necessary contract artifact file and instantiate it with truffle-contract
       App.contracts.Voting = TruffleContract(data);
-      // Set the provider for our contract
       App.contracts.Voting.setProvider(App.web3Provider);
-      // Use our contract to retrieve value data
       App.getProposals();
     });
     return App.bindEvents();
@@ -48,7 +42,7 @@ App = {
           $('#newDeadline').hide();
         }
       });
-    });    
+    });
 
     $(document).on('click', '.btn-vote', function (e) {
       var $this = $(this);
@@ -57,7 +51,6 @@ App = {
     });
   },
 
-  // Get proposals and render them
   getProposals: function () {
     var proposalsInstance;
     web3.eth.getAccounts(function (error, accounts) {
@@ -86,9 +79,9 @@ App = {
 
               const deadline = parseInt(data[6]);
               const currentTime = Math.floor(Date.now() / 1000);
-              
               let deadlineText = '';
-              
+
+              // ✅ Fix: Only disable buttons if deadline exists and has passed
               if (deadline > 0) {
                 const timeRemaining = deadline - currentTime;
                 if (timeRemaining > 0) {
@@ -97,13 +90,13 @@ App = {
                   deadlineText = `Voting ends in: ${minutes}m ${seconds}s`;
                 } else {
                   deadlineText = 'Voting ended';
+                  proposalTemplate.find('.btn-vote').attr('disabled', true);
                 }
               } else {
                 deadlineText = 'No deadline set';
               }
-              
+
               proposalTemplate.find('.deadline').text(deadlineText);
-              
 
               for (j = 0; j < data[5].length; j++) {
                 if (data[5][j] == account) {
@@ -121,7 +114,6 @@ App = {
     $('button').button('reset');
   },
 
-  // Add proposal handler
   handleAddProposal: function (event) {
     event.preventDefault();
     var proposalInstance;
@@ -133,7 +125,6 @@ App = {
         deadline = Math.floor(Date.now() / 1000) + Math.floor(deadlineInput * 60);
       }
     }
-    
 
     web3.eth.getAccounts(function (error, accounts) {
       if (error) {
@@ -143,12 +134,12 @@ App = {
       App.contracts.Voting.deployed()
         .then(function (instance) {
           proposalInstance = instance;
-          return proposalInstance.addProposal(value, deadline, { from: account, gas: 300000 });
+          return proposalInstance.addProposal(value, deadline, {from: account, gas: 300000});
         })
         .then(function () {
           var event = proposalInstance.CreatedProposalEvent();
           App.handleEvent(event);
-          $('.input-value').val(''); // clean input
+          $('.input-value').val('');
           $('#newDeadline').val('');
         })
         .catch(function (err) {
@@ -158,7 +149,6 @@ App = {
     });
   },
 
-  // Vote handler
   handleAddVote: function (event) {
     event.preventDefault();
     var voteInstance;
@@ -173,7 +163,7 @@ App = {
       App.contracts.Voting.deployed()
         .then(function (instance) {
           voteInstance = instance;
-          return voteInstance.vote(proposalInt, voteValue, { from: account, gas: 300000 });
+          return voteInstance.vote(proposalInt, voteValue, {from: account, gas: 300000});
         })
         .then(function () {
           var event = voteInstance.CreatedVoteEvent();
@@ -196,7 +186,7 @@ App = {
       }
       event.stopWatching();
     });
-  }
+  },
 };
 
 $(function () {
